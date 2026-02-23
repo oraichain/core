@@ -10,6 +10,22 @@ import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/trans
 import { BaseScript } from "./Base.s.sol";
 
 contract Deploy is BaseScript {
+    /// Deploy từ env (tránh lỗi parser khi truyền string từ CLI). Gọi: forge script script/Deploy_YoVault.sol:Deploy run
+    /// Bắt buộc: VAULT_NAME, VAULT_SYMBOL, VAULT_ASSET, VAULT_OWNER
+    /// Tùy chọn: VAULT_AUTHORITY, VAULT_IMPL (mặc định 0), VAULT_DEPOSIT_AMOUNT (0), VAULT_PAUSE (false)
+    function run() public returns (YoVault vault, RolesAuthority authority) {
+        return run(
+            vm.envString("VAULT_NAME"),
+            vm.envString("VAULT_SYMBOL"),
+            vm.envAddress("VAULT_ASSET"),
+            vm.envAddress("VAULT_OWNER"),
+            vm.envOr("VAULT_AUTHORITY", address(0)),
+            vm.envOr("VAULT_IMPL", address(0)),
+            vm.envOr("VAULT_DEPOSIT_AMOUNT", uint256(0)),
+            vm.envOr("VAULT_PAUSE", false)
+        );
+    }
+
     function run(
         string memory _name,
         string memory _symbol,
@@ -53,7 +69,7 @@ contract Deploy is BaseScript {
         }
         console.log("yoVault implementation deployed at: ", address(impl));
 
-        bytes memory data = abi.encodeWithSelector(vault.initialize.selector, IERC20(_asset), _owner, _name, _symbol);
+        bytes memory data = abi.encodeWithSelector(YoVault.initialize.selector, IERC20(_asset), _owner, _name, _symbol);
 
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(address(impl), _owner, data);
 

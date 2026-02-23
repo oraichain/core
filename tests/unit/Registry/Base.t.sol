@@ -13,6 +13,7 @@ import { MockAuthority } from "../../mocks/MockAuthority.sol";
 import { YoRegistry } from "src/YoRegistry.sol";
 
 /// @notice Base test contract with common logic needed by all YoRegistry tests.
+/// Set env FORK=1 to run with Arbitrum fork (optional, for consistency with other suites).
 abstract contract Registry_Base_Test is Test, Events, Utils, Constants {
     // ========================================= VARIABLES =========================================
     Users internal users;
@@ -23,11 +24,9 @@ abstract contract Registry_Base_Test is Test, Events, Utils, Constants {
 
     // ====================================== SET-UP FUNCTION ======================================
     function setUp() public virtual {
-        vm.createSelectFork({
-            blockNumber: 24_500_000, // Jan-02-2025 03:42:27 AM +UTC
-            urlOrAlias: vm.envOr("BASE_RPC_URL", string("https://base.llamarpc.com"))
-        });
-
+        if (vm.envOr("FORK", uint256(0)) == 1) {
+            vm.createSelectFork(vm.envOr("ARBITRUM_RPC_URL", string("https://evm-42161.keplr.app")));
+        }
         // Create the registry admin.
         users.admin = payable(makeAddr({ name: "Admin" }));
         vm.startPrank({ msgSender: users.admin });

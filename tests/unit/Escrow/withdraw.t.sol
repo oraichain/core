@@ -14,7 +14,7 @@ contract Withdraw_Unit_Concrete_Test is Base_Test {
     function test_escrow_withdraw() public {
         vm.startPrank({ msgSender: users.admin });
         YoEscrow escrow = new YoEscrow(address(depositVault));
-        deal({ token: address(usdc), to: address(escrow), give: 1000 * 1e6, adjust: true });
+        fundWithUsdc(address(escrow), 1000 * 1e6);
 
         bytes memory data = abi.encodeWithSelector(YoEscrow.withdraw.selector, address(usdc), 500 * 1e6);
 
@@ -31,7 +31,7 @@ contract Withdraw_Unit_Concrete_Test is Base_Test {
     function test_escrow_withdraw_reverts_Escrow__AmountZero() public {
         vm.startPrank({ msgSender: users.admin });
         YoEscrow escrow = new YoEscrow(address(depositVault));
-        deal({ token: address(usdc), to: address(escrow), give: 1000 * 1e6, adjust: true });
+        fundWithUsdc(address(escrow), 1000 * 1e6);
 
         bytes memory data = abi.encodeWithSelector(YoEscrow.withdraw.selector, address(usdc), 0);
 
@@ -46,7 +46,7 @@ contract Withdraw_Unit_Concrete_Test is Base_Test {
     function test_escrow_withdraw_reverts_Escrow__OnlyVault() public {
         vm.startPrank({ msgSender: users.admin });
         YoEscrow escrow = new YoEscrow(address(depositVault));
-        deal({ token: address(usdc), to: address(escrow), give: 1000 * 1e6, adjust: true });
+        fundWithUsdc(address(escrow), 1000 * 1e6);
 
         vm.expectRevert(abi.encodeWithSelector(Errors.Escrow__OnlyVault.selector));
         escrow.withdraw(address(usdc), 500 * 1e6);

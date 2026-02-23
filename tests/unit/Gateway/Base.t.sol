@@ -13,18 +13,25 @@ import { Utils } from "../../utils/Utils.sol";
 import { Events } from "../../utils/Events.sol";
 import { Constants } from "../../utils/Constants.sol";
 import { MockAuthority } from "../../mocks/MockAuthority.sol";
+import { MockERC20 } from "../../mocks/MockERC20.sol";
 
 import { YoGateway } from "src/YoGateway.sol";
 import { YoVault } from "src/YoVault.sol";
 import { YoRegistry } from "src/YoRegistry.sol";
 
 /// @notice Base test contract with common logic needed by all YoGateway tests.
+/// Set env FORK=1 to run against Arbitrum RPC (real USDC); otherwise uses MockERC20 (no RPC).
 
 abstract contract Gateway_Base_Test is Test, Events, Utils, Constants {
     using Math for uint256;
 
+    /// @dev Arbitrum One native USDC
+    address internal constant ARBITRUM_USDC = 0xaf88d065e77c8cC2239327C5EDb3A432268e5831;
+
     // ========================================= VARIABLES =========================================
     Users internal users;
+    /// @dev When true, tests use createSelectFork + real USDC; when false, use MockERC20 (no RPC).
+    bool internal useFork;
 
     // ====================================== TEST CONTRACTS =======================================
     IERC20 internal usdc;
@@ -38,20 +45,16 @@ abstract contract Gateway_Base_Test is Test, Events, Utils, Constants {
 
     // ====================================== SET-UP FUNCTION ======================================
     function setUp() public virtual {
-        vm.createSelectFork({
-            blockNumber: 29_066_193,
-            urlOrAlias: vm.envOr("BASE_RPC_URL", string("https://base.llamarpc.com"))
-        });
+        useFork = vm.envOr("FORK", uint256(0)) == 1;
 
-        // USDC (https://basescan.org/token/0x833589fcd6edb6e08f4c7c32d4f71b54bda02913)
-        usdc = IERC20(0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913);
-
-        // Use existing YoVault deployment
-        yoVault = YoVault(payable(0x0000000f2eB9f69274678c76222B35eEc7588a65));
-
-        // Label the base test contracts.
+        if (useFork) {
+            vm.createSelectFork(vm.envOr("ARBITRUM_RPC_URL", string("https://evm-42161.keplr.app")));
+            usdc = IERC20(ARBITRUM_USDC);
+        } else {
+            MockERC20 mockUsdc = new MockERC20("USD Coin", "USDC");
+            usdc = IERC20(address(mockUsdc));
+        }
         vm.label({ account: address(usdc), newLabel: "USDC" });
-        vm.label({ account: address(yoVault), newLabel: "yoUSDCVault" });
 
         // Create the admin.
         users.admin = payable(makeAddr({ name: "Admin" }));
@@ -59,12 +62,23 @@ abstract contract Gateway_Base_Test is Test, Events, Utils, Constants {
 
         deployContracts();
 
+        vm.label({ account: address(yoVault), newLabel: "yoUSDCVault" });
+
         // Create users for testing.
         (users.bob, users.bobKey) = createUser("Bob");
         (users.alice, users.aliceKey) = createUser("Alice");
     }
 
     // ====================================== HELPERS =======================================
+
+    /// @dev Funds an address with USDC: deal() when FORK=1, mint() when mock.
+    function fundWithUsdc(address to, uint256 amount) internal {
+        if (useFork) {
+            deal({ token: address(usdc), to: to, give: amount, adjust: true });
+        } else {
+            MockERC20(address(usdc)).mint(to, amount);
+        }
+    }
 
     /// @dev Approves the protocol contracts to spend the user's USDC and shares.
     function approveProtocol(address from) internal {
@@ -79,7 +93,7 @@ abstract contract Gateway_Base_Test is Test, Events, Utils, Constants {
     function createUser(string memory name) internal returns (address payable, uint256) {
         (address user, uint256 key) = makeAddrAndKey(name);
         vm.deal({ account: user, newBalance: 100 ether });
-        deal({ token: address(usdc), to: user, give: 1_000_000e6, adjust: true });
+        fundWithUsdc(user, 1_000_000e6);
         approveProtocol({ from: user });
         return (payable(user), key);
     }
