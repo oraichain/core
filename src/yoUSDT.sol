@@ -46,7 +46,7 @@ contract yoUSDT is ERC4626Upgradeable, Compatible, IYoVault, AuthUpgradeable, Pa
     /// @dev The percentage of assets to relay to yoUSD on deposit. 95e16 = 95%.
     uint256 internal constant RELAY_PERCENTAGE = 95e16;
     /// @dev the address of the oracle contract
-    address public constant ORACLE_ADDRESS = 0x6E879d0CcC85085A709eBf5539224f53d0D396B0;
+    address public constant ORACLE_ADDRESS = 0x8E7D4C3f93e30e319b15D6FF5781af4eAc508465;
     address public constant YO_USD_ADDRESS = 0x0000000f2eB9f69274678c76222B35eEc7588a65;
 
     /// @dev the aggregated underlying balances across all strategies/chains, reported by an oracle

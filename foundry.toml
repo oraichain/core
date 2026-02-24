@@ -22,12 +22,12 @@ fuzz = { runs = 10_000 }
 verbosity = 4
 
 [etherscan]
+# API key chỉ cần khi verify contract (forge verify). Deploy không cần.
+# Để trống = không bắt buộc set env; khi verify thì truyền --etherscan-api-key <key> hoặc set env.
 unichain = { key = "DPV3QUAJW29V316Z2HYHU2Y2HZY3V4B422", url = "https://api.uniscan.xyz/api", chain = "130" }
-
-
-mainnet = { key = "${API_KEY_ETHERSCAN}" }
-base = { key = "${API_KEY_ETHERSCAN_BASE}" }
-arbitrum = { key = "${API_KEY_ETHERSCAN_ARBITRUM}" }
+mainnet = { key = "" }
+base = { key = "" }
+arbitrum = { key = "" }
 
 [fmt]
 bracket_spacing = true

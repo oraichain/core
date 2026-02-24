@@ -1,0 +1,26 @@
+{
+  "name": "yo-gateway-tsclient",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "deposit": "hardhat run src/deposit.ts --network arbitrum",
+    "redeem": "hardhat run src/redeem.ts --network arbitrum",
+    "deposit:local": "hardhat run src/deposit.ts --network localhost",
+"redeem:local": "hardhat run src/redeem.ts --network localhost",
+    "quote": "hardhat run src/quote.ts --network arbitrum",
+    "allowances": "hardhat run src/allowances.ts --network arbitrum",
+    "vault-views": "hardhat run src/vault-views.ts --network arbitrum",
+    "vault-views:local": "hardhat run src/vault-views.ts --network localhost",
+    "oracle-update-price": "hardhat run src/oracle-update-price.ts --network arbitrum",
+    "oracle-update-price:local": "hardhat run src/oracle-update-price.ts --network localhost"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^3.0.0",
+    "ethers": "^6.4.0",
+    "@types/node": "^25.3.0",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
