@@ -10,7 +10,7 @@ const VAULT_ABI = (YoVaultV2Abi as { abi: InterfaceAbi }).abi;
  * Script gọi các view của YoVault_V2 (test, hardcode).
  */
 async function main() {
-  const vaultAddress = "0x156722e04eA32E7DEC8C7aDfC58347aA23983b58";
+  const vaultAddress = "0x611c347DC99EAc72e5A3A9c7009E8BeAcbBcA999";
   const userAddress = "0x0000000000000000000000000000000000000000"; // thay bằng địa chỉ cần test
   const assetsForPreview = 1_000_000n;
   const sharesForPreview = 1_000_000n;

@@ -72,6 +72,10 @@ contract YoVault_V2 is ERC4626Upgradeable, Compatible, IYoVault, AuthUpgradeable
     /// @dev used to store the amount of shares that are pending redemption, it must be fulfilled by the vault operator
     mapping(address user => PendingRedeem redeem) internal _pendingRedeem;
 
+    /// @dev the address of the receiver contract
+    address public operatorWithdrawalAddress;
+    uint256 public operatorPendingWithdrawalAmount;
+
     //============================== CONSTRUCTOR ===============================
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -86,6 +90,9 @@ contract YoVault_V2 is ERC4626Upgradeable, Compatible, IYoVault, AuthUpgradeable
         __ERC4626_init(_asset);
         __Auth_init(_owner, Authority(address(0)));
         __Pausable_init();
+
+        operatorWithdrawalAddress = address(0);
+        operatorPendingWithdrawalAmount = 0;
     }
 
     // ========================================= PUBLIC FUNCTIONS =========================================
@@ -235,7 +242,6 @@ contract YoVault_V2 is ERC4626Upgradeable, Compatible, IYoVault, AuthUpgradeable
     }
 
     //============================== VIEW FUNCTIONS ===============================
-
     function totalAssets() public view override returns (uint256) {
         (uint256 price, ) = IYoOracle(ORACLE_ADDRESS).getLatestPrice(address(this));
         return price.mulDiv(super.totalSupply(), 10 ** decimals(), Math.Rounding.Floor);
@@ -401,10 +407,54 @@ contract YoVault_V2 is ERC4626Upgradeable, Compatible, IYoVault, AuthUpgradeable
         return assets.mulDiv(feeBasisPoints, feeBasisPoints + DENOMINATOR, Math.Rounding.Ceil);
     }
 
-    /// @dev The available balance is the balance of the vault minus the total pending assets.
+    /// @dev The available balance is the balance of the vault minus total pending (user redeems)
+    /// and minus operator-requested-but-not-yet-processed amount. Used for instant redeems and operator request/process.
     /// @return The available balance.
     function _getAvailableBalance() internal view returns (uint256) {
         uint256 balance = IERC20(asset()).balanceOf(address(this));
-        return balance > totalPendingAssets ? balance - totalPendingAssets : 0;
+        uint256 reserved = totalPendingAssets + operatorPendingWithdrawalAmount;
+        return balance > reserved ? balance - reserved : 0;
+    }
+
+    //============================== CUSTOM FUNCTIONS (OPERATOR WITHDRAWAL) ===============================
+    /// @notice Set the address that receives the assets when the operator withdrawal is processed.
+    /// @param newOperatorWithdrawalAddress The new receiver address. Cannot change while a withdrawal is pending.
+    function setOperatorWithdrawalAddress(address newOperatorWithdrawalAddress) external requiresAuth {
+        require(newOperatorWithdrawalAddress != address(0), Errors.ZeroAddress());
+        require(operatorPendingWithdrawalAmount == 0, Errors.OperatorWithdrawal__PendingExists());
+
+        operatorWithdrawalAddress = newOperatorWithdrawalAddress;
+        emit OperatorWithdrawalAddressUpdated(newOperatorWithdrawalAddress);
+    }
+
+    /// @notice Operator requests to withdraw assets. Amount is reserved until process or cancel.
+    /// @param assets The amount of assets to withdraw. Must be > 0 and <= getAvailableBalance().
+    function operatorRequestWithdraw(uint256 assets) external requiresAuth {
+        require(operatorWithdrawalAddress != address(0), Errors.OperatorWithdrawalAddressNotSettled());
+        require(assets != 0, Errors.Gateway__ZeroAmount());
+        require(assets <= _getAvailableBalance(), Errors.InsufficientAssets());
+
+        operatorPendingWithdrawalAmount += assets;
+        emit OperatorRequestWithdraw(assets);
+    }
+
+    /// @notice Process the pending operator withdrawal: transfer reserved assets to operatorWithdrawalAddress.
+    function processOperatorWithdrawal() external requiresAuth {
+        require(operatorWithdrawalAddress != address(0), Errors.OperatorWithdrawalAddressNotSettled());
+
+        uint256 assets = operatorPendingWithdrawalAmount;
+        require(assets != 0, Errors.Gateway__ZeroAmount());
+        require(assets <= _getAvailableBalance(), Errors.InsufficientAssets());
+
+        operatorPendingWithdrawalAmount = 0;
+        IERC20(asset()).safeTransfer(operatorWithdrawalAddress, assets);
+        emit OperatorWithdrawalProcessed(operatorWithdrawalAddress, assets);
+    }
+
+    /// @notice Cancel the pending operator withdrawal without transferring assets.
+    function cancelOperatorWithdrawal() external requiresAuth {
+        require(operatorPendingWithdrawalAmount != 0, Errors.Gateway__ZeroAmount());
+        operatorPendingWithdrawalAmount = 0;
+        emit OperatorWithdrawalCancelled();
     }
 }

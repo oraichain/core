@@ -10,7 +10,7 @@ const VAULT_ABI = ["function asset() external view returns (address)"];
 
 async function main() {
   const gatewayAddress = "0x88Acc5D232081599FD66dc4192a49B0e22aa96F2";
-  const vaultAddress = "0x156722e04eA32E7DEC8C7aDfC58347aA23983b58";
+  const vaultAddress = "0x611c347DC99EAc72e5A3A9c7009E8BeAcbBcA999";
   const assetsRaw = 1_000_000;
   const minSharesOut = "0";
   const partnerId = 0;

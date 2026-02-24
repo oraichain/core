@@ -19,6 +19,18 @@ library Errors {
     /// @notice Thrown when a claim request is fulfilled with an invalid shares amount.
     error InvalidSharesAmount();
 
+    /// @notice Thrown when the operator withdrawal address is not settled
+    error OperatorWithdrawalAddressNotSettled();
+
+    /// @notice Thrown when changing operator withdrawal address while a withdrawal is pending
+    error OperatorWithdrawal__PendingExists();
+
+    /// @notice Thrown when the address is zero
+    error ZeroAddress();
+
+    /// @notice Thrown when the vault has insufficient assets for a withdrawal
+    error InsufficientAssets();
+
     /// @notice Thrown when a withdraw is attempted with an amount different than the claimable assets.
     error InvalidAssetsAmount();
 

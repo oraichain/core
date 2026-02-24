@@ -19,7 +19,7 @@ contract Deploy is BaseScript {
             vm.envString("VAULT_SYMBOL"),
             vm.envAddress("VAULT_ASSET"),
             vm.envAddress("VAULT_OWNER"),
-            vm.envAddress("VAULT_AUTHORITY"),
+            vm.envOr("VAULT_AUTHORITY", address(0)),
             vm.envOr("VAULT_IMPL", address(0)),
             vm.envOr("VAULT_DEPOSIT_AMOUNT", uint256(0)),
             vm.envOr("VAULT_PAUSE", false)

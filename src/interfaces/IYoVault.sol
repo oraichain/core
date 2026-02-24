@@ -60,5 +60,20 @@ interface IYoVault {
     /// @param assets The assets amount
     event RequestCancelled(address indexed receiver, uint256 shares, uint256 assets);
 
+    /// @notice Emitted when the operator requests to withdraw assets
+    /// @param assets The assets amount
+    event OperatorRequestWithdraw(uint256 assets);
+
+    /// @notice Emitted when the operator cancels a withdrawal request
+    event OperatorWithdrawalCancelled();
+
+    /// @notice Emitted when the operator processes a withdrawal request
+    /// @param assets The assets amount
+    event OperatorWithdrawalProcessed(address indexed receiver, uint256 assets);
+
+    /// @notice Emitted when the operator withdrawal address is updated
+    /// @param newOperatorWithdrawalAddress The new operator withdrawal address
+    event OperatorWithdrawalAddressUpdated(address newOperatorWithdrawalAddress);
+
     function requestRedeem(uint256 shares, address receiver, address owner) external returns (uint256 requestId);
 }
